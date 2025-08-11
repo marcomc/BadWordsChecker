@@ -110,7 +110,7 @@ def transcribe_audio(wav_path: Path, model: Model, verbose: bool) -> Optional[st
 
 
 def process_mp3_file(
-    mp3_path: Path, model: Model
+    mp3_path: Path, model: Model, verbose: bool
 ) -> Optional[str]:
     """Processes a single MP3 file: converts to WAV and transcribes."""
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_wav_file:
@@ -118,7 +118,7 @@ def process_mp3_file(
         if not convert_mp3_to_wav(mp3_path, wav_path):
             return None
         
-        transcription = transcribe_audio(wav_path, model)
+        transcription = transcribe_audio(wav_path, model, verbose)
         
         if transcription:
             save_transcription(transcription, mp3_path)

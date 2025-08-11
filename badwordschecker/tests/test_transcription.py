@@ -58,7 +58,7 @@ class TestTranscription(unittest.TestCase):
     @patch("badwordschecker.transcription.save_transcription")
     def test_process_mp3_file(self, mock_save, mock_transcribe, mock_convert):
         model = MagicMock()
-        result = process_mp3_file(Path("test.mp3"), model)
+        result = process_mp3_file(Path("test.mp3"), model, False)
         self.assertEqual(result, "transcribed text")
         mock_convert.assert_called_once()
         mock_transcribe.assert_called_once()
