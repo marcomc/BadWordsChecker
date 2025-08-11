@@ -122,3 +122,8 @@ dmypy.json
 .pyre/
 tests/mp3_folder/
 parolacce/
+
+# BadWordsChecker specific ignores
+badwords-it-copy.txt
+dummy_path.txt
+mp3_folder/
