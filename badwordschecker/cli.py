@@ -82,7 +82,7 @@ def main():
     output_dir.mkdir(exist_ok=True)
 
     for mp3_path in mp3_files:
-        logger.debug(f"Starting transcription for {mp3_path.name}...")
+        logger.info(f"Processing {mp3_path.name}...")
         transcription = process_mp3_file(mp3_path, model)
         if transcription:
             matches = scan_text(transcription, bad_words, config["match_mode"])

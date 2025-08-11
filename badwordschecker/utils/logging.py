@@ -1,6 +1,23 @@
 import logging
 import sys
 from json_log_formatter import JSONFormatter
+import io
+
+class TqdmToLogger(io.StringIO):
+    """
+    Output stream for TQDM which will output to a logger.
+    """
+    logger = None
+    level = None
+    buf = ''
+    def __init__(self, logger, level=None):
+        super(TqdmToLogger, self).__init__()
+        self.logger = logger
+        self.level = level or logging.INFO
+    def write(self, buf):
+        self.buf = buf.strip('\r\n\t ')
+    def flush(self):
+        self.logger.log(self.level, self.buf)
 
 def setup_logging(verbose: bool = False, log_format: str = "text"):
     level = logging.DEBUG if verbose else logging.INFO

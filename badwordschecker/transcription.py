@@ -8,6 +8,7 @@ from typing import Optional
 
 from vosk import KaldiRecognizer, Model
 from tqdm import tqdm
+from badwordschecker.utils.logging import TqdmToLogger
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,8 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
             total_frames = wf.getnframes()
             chunk_size = 4000
             
-            with tqdm(total=total_frames, unit="frames", desc="Transcribing") as pbar:
+            tqdm_out = TqdmToLogger(logger, level=logging.INFO)
+            with tqdm(total=total_frames, unit="frames", desc="Transcribing", file=tqdm_out) as pbar:
                 while True:
                     data = wf.readframes(chunk_size)
                     if len(data) == 0:
