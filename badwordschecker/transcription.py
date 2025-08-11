@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from vosk import KaldiRecognizer, Model
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +52,17 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
             rec = KaldiRecognizer(model, wf.getframerate())
             rec.SetWords(True)
 
-            while True:
-                data = wf.readframes(4000)
-                if len(data) == 0:
-                    break
-                if rec.AcceptWaveform(data):
-                    pass
+            total_frames = wf.getnframes()
+            chunk_size = 4000
+            
+            with tqdm(total=total_frames, unit="frames", desc="Transcribing") as pbar:
+                while True:
+                    data = wf.readframes(chunk_size)
+                    if len(data) == 0:
+                        break
+                    if rec.AcceptWaveform(data):
+                        pass
+                    pbar.update(chunk_size)
 
             result = json.loads(rec.FinalResult())
             return result.get("text")
