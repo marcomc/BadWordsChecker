@@ -8,7 +8,7 @@ from typing import Optional
 
 from vosk import KaldiRecognizer, Model
 from tqdm import tqdm
-from badwordschecker.utils.logging import TqdmToLogger
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,14 @@ def convert_mp3_to_wav(mp3_path: Path, wav_path: Path) -> bool:
         str(wav_path),
     ]
     try:
+        # Use -hide_banner and -loglevel error to suppress ffmpeg output unless there is an error
         subprocess.run(
-            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            command + ["-hide_banner", "-loglevel", "error"], 
+            check=True, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
         )
-        logger.info(f"Converted {mp3_path} to {wav_path}")
+        logger.debug(f"Converted {mp3_path} to {wav_path}")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         logger.error(f"Failed to convert {mp3_path} to WAV: {e}")
@@ -56,15 +60,21 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
             total_frames = wf.getnframes()
             chunk_size = 4000
             
-            tqdm_out = TqdmToLogger(logger, level=logging.INFO)
-            with tqdm(total=total_frames, unit="frames", desc="Transcribing", file=tqdm_out) as pbar:
+            with tqdm(
+                total=total_frames, 
+                unit="frames", 
+                desc="Transcribing", 
+                file=sys.stderr,  # Explicitly write to stderr
+                bar_format='{l_bar}{bar:20}{r_bar}', # Custom bar format
+                leave=False # Remove bar on completion
+            ) as pbar:
                 while True:
                     data = wf.readframes(chunk_size)
                     if len(data) == 0:
                         break
                     if rec.AcceptWaveform(data):
                         pass
-                    pbar.update(chunk_size)
+                    pbar.update(len(data))
 
             result = json.loads(rec.FinalResult())
             return result.get("text")
