@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Optional
 
 from vosk import KaldiRecognizer, Model
-from tqdm import tqdm
 import sys
 
 logger = logging.getLogger(__name__)
@@ -30,9 +29,9 @@ def convert_mp3_to_wav(mp3_path: Path, wav_path: Path) -> bool:
     try:
         # Use -hide_banner and -loglevel error to suppress ffmpeg output unless there is an error
         subprocess.run(
-            command + ["-hide_banner", "-loglevel", "error"], 
-            check=True, 
-            stdout=subprocess.PIPE, 
+            command + ["-hide_banner", "-loglevel", "error"],
+            check=True,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
         logger.debug(f"Converted {mp3_path} to {wav_path}")
@@ -59,22 +58,27 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
 
             total_frames = wf.getnframes()
             chunk_size = 4000
-            
-            with tqdm(
-                total=total_frames, 
-                unit="frames", 
-                desc="Transcribing", 
-                file=sys.stderr,  # Explicitly write to stderr
-                bar_format='{l_bar}{bar:20}{r_bar}', # Custom bar format
-                leave=False # Remove bar on completion
-            ) as pbar:
-                while True:
-                    data = wf.readframes(chunk_size)
-                    if len(data) == 0:
-                        break
-                    if rec.AcceptWaveform(data):
-                        pass
-                    pbar.update(len(data))
+            processed_frames = 0
+            last_reported_progress = -1
+
+            while True:
+                data = wf.readframes(chunk_size)
+                if len(data) == 0:
+                    break
+                
+                processed_frames += len(data)
+                progress = int((processed_frames / total_frames) * 100)
+
+                if progress > last_reported_progress and progress % 10 == 0:
+                    sys.stderr.write(f"\rTranscription progress: {progress}%")
+                    sys.stderr.flush()
+                    last_reported_progress = progress
+
+                if rec.AcceptWaveform(data):
+                    pass
+
+            sys.stderr.write("\rTranscription complete.    \n")
+            sys.stderr.flush()
 
             result = json.loads(rec.FinalResult())
             return result.get("text")
