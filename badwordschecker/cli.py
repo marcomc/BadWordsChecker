@@ -20,7 +20,7 @@ from badwordschecker.reporting import (
 from badwordschecker.scanning import scan_text
 from badwordschecker.transcription import process_mp3_file
 from badwordschecker.utils.config import get_config
-from badwordschecker.utils.system import command_exists
+from badwordschecker.utils.system import command_exists, silence_stderr
 from badwordschecker.utils.logging import setup_logging
 from badwordschecker.model_manager import get_model_path, handle_model_download
 
