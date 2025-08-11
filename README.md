@@ -88,10 +88,11 @@ badwordschecker /path/to/your/mp3/folder
 
 -   `--download-dict [path]`: Download the default Italian bad words dictionary. Optionally specify a path.
 -   `--dict <path>`: Use a custom dictionary file.
--   `--edit-dict`: Open the dictionary in the system default editor.
--   `--match-mode {exact,substring}`: Set the matching mode (default: `exact`).
--   `--quarantine <folder>`: Move offending MP3s to a review folder.
--   `--recursive`: Scan for MP3 files recursively.
+ -   `--edit-dict`: Open the dictionary in the system default editor.
+ -   `--model-path <path>`: Specify a custom path for the Vosk model directory. If not provided, the model will be stored in a default user configuration directory.
+ -   `--match-mode {exact,substring}`: Set the matching mode (default: `exact`).
+ -   `--quarantine <folder>`: Move offending MP3s to a review folder.
+ -   `--recursive`: Scan for MP3 files recursively.
 -   `--verbose`: Enable verbose logging.
 -   `--version`: Show the version number.
 -   `-h, --help`: Show the help message.

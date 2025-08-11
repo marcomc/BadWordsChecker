@@ -217,12 +217,14 @@ graph TD
 | Item | Priority | Type | Status |
 | :--- | :--- | :--- | :--- |
 | Fix `test_config_integration.py` indentation | High | tech-debt | Broken |
-| Implement `substring` match mode | High | feat | Planned |
-| Auto-install/verify `ffmpeg` and Vosk model | Medium | feat | Planned |
+| Implement `substring` match mode | High | feat | Implemented |
+| Auto-install/verify `ffmpeg` and Vosk model | Medium | feat | Implemented |
 | Robust filename handling (spaces, special chars) | Medium | tech-debt | Planned |
-| Structured logging (e.g., JSON output) | Low | tech-debt | Planned |
+| Structured logging (e.g., JSON output) | Low | tech-debt | Implemented |
 | Add fuzzy matching (Levenshtein) | Low | feat | Planned |
 | Support for other languages | Low | feat | Planned |
+| Control Vosk API verbosity | High | bug | Broken |
+| Fix full transcription logic | High | bug | Broken |
 
 # Missing / Partial Implementations
 -   The `substring` match mode in `scanning.py` is currently a placeholder and needs full implementation.
