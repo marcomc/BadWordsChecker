@@ -20,6 +20,7 @@ from badwordschecker.reporting import (
 )
 from badwordschecker.scanning import scan_text
 from badwordschecker.transcription import process_mp3_file
+from badwordschecker.utils.system import command_exists
 from badwordschecker.utils.logging import setup_logging
 
 __version__ = "0.1.0"
@@ -80,6 +81,10 @@ def main():
 
     setup_logging(args.verbose)
 
+    if not command_exists("ffmpeg"):
+        logger.error("ffmpeg not found. Please install it and ensure it's in your PATH.")
+        sys.exit(1)
+
     if args.download_dict:
         dest_path = args.download_dict if isinstance(args.download_dict, Path) else DEFAULT_DICT_PATH
         download_dictionary(DEFAULT_DICT_URL, dest_path, args.force)
@@ -109,7 +114,8 @@ def main():
     model_path = Path("vosk-model-it-0.22")
     if not model_path.exists():
         logger.error(
-            f"Vosk model not found at {model_path}. Please download it first."
+            f"Vosk model not found at {model_path}. "
+            "Please download it from https://alphacephei.com/vosk/models and unzip it in the project root."
         )
         sys.exit(1)
 
