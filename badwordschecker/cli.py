@@ -74,12 +74,18 @@ def main():
         "--verbose", action="store_true", default=None, help="Enable verbose logging."
     )
     parser.add_argument(
+        "--log-format",
+        choices=["text", "json"],
+        default="text",
+        help="Set the log output format.",
+    )
+    parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     args = parser.parse_args()
 
-    setup_logging(args.verbose)
+    setup_logging(args.verbose, args.log_format)
 
     if not command_exists("ffmpeg"):
         logger.error("ffmpeg not found. Please install it and ensure it's in your PATH.")
