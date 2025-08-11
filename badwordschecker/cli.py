@@ -62,7 +62,11 @@ def main():
     handle_model_download(model_path)
 
     try:
-        model = Model(str(model_path))
+        if not config["verbose"]:
+            with silence_stderr():
+                model = Model(str(model_path))
+        else:
+            model = Model(str(model_path))
     except Exception as e:
         logger.error(f"Failed to load Vosk model: {e}")
         sys.exit(1)
@@ -83,7 +87,7 @@ def main():
 
     for mp3_path in mp3_files:
         logger.info(f"Processing {mp3_path.name}...")
-        transcription = process_mp3_file(mp3_path, model)
+        transcription = process_mp3_file(mp3_path, model, config["verbose"])
         if transcription:
             matches = scan_text(transcription, bad_words, config["match_mode"])
             if matches:

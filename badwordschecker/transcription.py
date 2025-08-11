@@ -12,6 +12,8 @@ import subprocess
 import json
 import logging
 
+from badwordschecker.utils.system import silence_stderr
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,12 +41,15 @@ def convert_mp3_to_wav(mp3_path: Path, wav_path: Path) -> bool:
         )
         logger.debug(f"Converted {mp3_path} to {wav_path}")
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        logger.error(f"Failed to convert {mp3_path} to WAV: {e.stderr}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to convert {mp3_path} to WAV: {e.stderr.decode('utf-8')}")
+        return False
+    except FileNotFoundError:
+        logger.error("ffmpeg not found. Please ensure it is installed and in your PATH.")
         return False
 
 
-def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
+def transcribe_audio(wav_path: Path, model: Model, verbose: bool) -> Optional[str]:
     """Transcribes a WAV file using the Vosk model."""
     try:
         with wave.open(str(wav_path), "rb") as wf:
@@ -82,9 +87,15 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
                     sys.stderr.flush()
                     last_reported_progress = progress
 
-                if rec.AcceptWaveform(data):
-                    partial_result = json.loads(rec.Result())
-                    results.append(partial_result.get("text", ""))
+                if not verbose:
+                    with silence_stderr():
+                        if rec.AcceptWaveform(data):
+                            partial_result = json.loads(rec.Result())
+                            results.append(partial_result.get("text", ""))
+                else:
+                    if rec.AcceptWaveform(data):
+                        partial_result = json.loads(rec.Result())
+                        results.append(partial_result.get("text", ""))
 
             sys.stderr.write("\rTranscription complete.    \n")
             sys.stderr.flush()
