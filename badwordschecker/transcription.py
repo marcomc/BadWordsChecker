@@ -67,6 +67,7 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
             chunk_size = 4000
             processed_frames = 0
             last_reported_progress = -1
+            results = []
 
             while True:
                 data = wf.readframes(chunk_size)
@@ -74,7 +75,7 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
                     break
                 
                 processed_frames += chunk_size
-                progress = int((processed_frames / total_frames) * 100)
+                progress = int((processed_frames / total_frames) * 100) if total_frames > 0 else 0
 
                 if progress > last_reported_progress and progress % 10 == 0:
                     sys.stderr.write(f"\rTranscription progress: {progress}%")
@@ -82,13 +83,16 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
                     last_reported_progress = progress
 
                 if rec.AcceptWaveform(data):
-                    pass
+                    partial_result = json.loads(rec.Result())
+                    results.append(partial_result.get("text", ""))
 
             sys.stderr.write("\rTranscription complete.    \n")
             sys.stderr.flush()
 
-            result = json.loads(rec.FinalResult())
-            return result.get("text")
+            final_result = json.loads(rec.FinalResult())
+            results.append(final_result.get("text", ""))
+            
+            return " ".join(results).strip()
     except Exception as e:
         logger.error(f"Failed to transcribe {wav_path}: {e}", exc_info=True)
         return None
