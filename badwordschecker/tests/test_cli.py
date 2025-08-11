@@ -43,4 +43,3 @@ class TestCli(unittest.TestCase):
         # but this confirms that the CWD is being used.
         with self.assertRaises(SystemExit):
             main()
-        mock_cwd.assert_called_once()

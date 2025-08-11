@@ -1,6 +1,6 @@
 import configparser
 from pathlib import Path
-import os
+import argparse
 
 DEFAULT_CONFIG_FILENAME = "badwordschecker.ini"
 DEFAULT_DICT_URL = "https://raw.githubusercontent.com/napolux/paroleitaliane/main/paroleitaliane/lista_badwords.txt"
@@ -13,59 +13,39 @@ def _get_config():
         Path(__file__).parent.parent.parent / DEFAULT_CONFIG_FILENAME,
     ]
     config = configparser.ConfigParser()
-    found = False
-    for config_path in config_paths:
-        if config_path.exists():
-            config.read(str(config_path))
-            found = True
-    return config if found else None
+    config.read(config_paths)
+    return config
 
-def get_config_option(section, key, fallback=None, cast=None):
+def get_config(args: argparse.Namespace) -> dict:
+    """Merge CLI arguments and config file settings into a single dictionary."""
     config = _get_config()
-    if config and section in config and key in config[section]:
-        value = config[section][key]
-        if cast:
-            try:
-                return cast(value)
-            except Exception:
-                return fallback
-        return value
-    return fallback
+    
+    def get_option(key, section, fallback, is_bool=False):
+        # CLI arguments have the highest precedence.
+        cli_value = getattr(args, key, None)
+        if cli_value is not None and cli_value is not False:
+            return cli_value
+        
+        # Fallback to config file.
+        if section in config and key in config[section]:
+            if is_bool:
+                return str(config.get(section, key)).lower() in ("true", "1", "yes")
+            return config.get(section, key)
+            
+        # Use the default fallback.
+        return fallback
 
-def get_config_dict_url(cli_url=None):
-    if cli_url:
-        return cli_url
-    return get_config_option("dictionary", "url") or DEFAULT_DICT_URL
-
-def get_config_dict_path(cli_path=None):
-    if cli_path:
-        return cli_path
-    return get_config_option("dictionary", "path", fallback=DEFAULT_DICT_PATH)
-
-def get_config_force(cli_force=None):
-    if cli_force is not None:
-        return cli_force
-    val = get_config_option("options", "force", fallback="false")
-    return val.lower() in ("1", "true", "yes", "on")
-
-def get_config_match_mode(cli_mode=None):
-    if cli_mode:
-        return cli_mode
-    return get_config_option("options", "match_mode", fallback="exact")
-
-def get_config_quarantine(cli_path=None):
-    if cli_path:
-        return cli_path
-    return get_config_option("options", "quarantine", fallback=None)
-
-def get_config_recursive(cli_recursive=None):
-    if cli_recursive is not None:
-        return cli_recursive
-    val = get_config_option("options", "recursive", fallback="false")
-    return val.lower() in ("1", "true", "yes", "on")
-
-def get_config_verbose(cli_verbose=None):
-    if cli_verbose is not None:
-        return cli_verbose
-    val = get_config_option("options", "verbose", fallback="false")
-    return val.lower() in ("1", "true", "yes", "on")
+    return {
+        "mp3_folder": args.mp3_folder or Path.cwd(),
+        "download_dict": args.download_dict,
+        "force": get_option("force", "options", False, is_bool=True),
+        "dict": get_option("dict", "dictionary", DEFAULT_DICT_PATH),
+        "edit_dict": args.edit_dict,
+        "match_mode": get_option("match_mode", "options", "exact"),
+        "quarantine": get_option("quarantine", "options", None),
+        "recursive": get_option("recursive", "options", False, is_bool=True),
+        "verbose": get_option("verbose", "options", False, is_bool=True),
+        "log_format": get_option("log_format", "options", "text"),
+        "dict_url": get_option("dict_url", "dictionary", DEFAULT_DICT_URL),
+        "model_path": get_option("model_path", "options", None),
+    }
