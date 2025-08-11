@@ -8,6 +8,9 @@ from typing import Optional
 
 from vosk import KaldiRecognizer, Model
 import sys
+import subprocess
+import json
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,7 @@ def convert_mp3_to_wav(mp3_path: Path, wav_path: Path) -> bool:
     try:
         # Use -hide_banner and -loglevel error to suppress ffmpeg output unless there is an error
         subprocess.run(
-            command + ["-hide_banner", "-loglevel", "error"],
+            command + ["-y", "-hide_banner", "-loglevel", "error"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -37,7 +40,7 @@ def convert_mp3_to_wav(mp3_path: Path, wav_path: Path) -> bool:
         logger.debug(f"Converted {mp3_path} to {wav_path}")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        logger.error(f"Failed to convert {mp3_path} to WAV: {e}")
+        logger.error(f"Failed to convert {mp3_path} to WAV: {e.stderr}")
         return False
 
 
@@ -45,12 +48,16 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
     """Transcribes a WAV file using the Vosk model."""
     try:
         with wave.open(str(wav_path), "rb") as wf:
+            # Vosk requires mono WAV files with a specific sample rate.
+            # Check if the audio file meets these requirements.
             if (
                 wf.getnchannels() != 1
                 or wf.getsampwidth() != 2
                 or wf.getcomptype() != "NONE"
             ):
-                logger.error("Audio file must be WAV format mono PCM.")
+                logger.error(
+                    "Audio file must be WAV format mono PCM with 16kHz sample rate."
+                )
                 return None
 
             rec = KaldiRecognizer(model, wf.getframerate())
@@ -66,7 +73,7 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
                 if len(data) == 0:
                     break
                 
-                processed_frames += len(data)
+                processed_frames += chunk_size
                 progress = int((processed_frames / total_frames) * 100)
 
                 if progress > last_reported_progress and progress % 10 == 0:
@@ -83,7 +90,7 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
             result = json.loads(rec.FinalResult())
             return result.get("text")
     except Exception as e:
-        logger.error(f"Failed to transcribe {wav_path}: {e}")
+        logger.error(f"Failed to transcribe {wav_path}: {e}", exc_info=True)
         return None
 
 
