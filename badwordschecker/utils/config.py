@@ -35,7 +35,7 @@ def get_config_option(section, key, fallback=None, cast=None):
 def get_config_dict_url(cli_url=None):
     if cli_url:
         return cli_url
-    return get_config_option("dictionary", "url", fallback=DEFAULT_DICT_URL)
+    return get_config_option("dictionary", "url") or DEFAULT_DICT_URL
 
 def get_config_dict_path(cli_path=None):
     if cli_path:
