@@ -145,20 +145,18 @@ def main():
     output_dir = Path("parolacce")
     output_dir.mkdir(exist_ok=True)
 
-    with tempfile.TemporaryDirectory() as temp_dir_str:
-        temp_dir = Path(temp_dir_str)
-        for mp3_path in mp3_files:
-            logger.info(f"Processing {mp3_path.name}...")
-            transcription = process_mp3_file(mp3_path, model, temp_dir)
-            if transcription:
-                matches = scan_text(transcription, bad_words, args.match_mode)
-                if matches:
-                    all_matches[mp3_path.name] = matches
-                    generate_per_file_report(mp3_path, matches, output_dir)
-                    if args.quarantine:
-                        args.quarantine.mkdir(exist_ok=True)
-                        shutil.move(str(mp3_path), str(args.quarantine))
-                        logger.info(f"Moved {mp3_path.name} to {args.quarantine}")
+    for mp3_path in mp3_files:
+        logger.info(f"Processing {mp3_path.name}...")
+        transcription = process_mp3_file(mp3_path, model)
+        if transcription:
+            matches = scan_text(transcription, bad_words, args.match_mode)
+            if matches:
+                all_matches[mp3_path.name] = matches
+                generate_per_file_report(mp3_path, matches, output_dir)
+                if args.quarantine:
+                    args.quarantine.mkdir(exist_ok=True)
+                    shutil.move(str(mp3_path), str(args.quarantine))
+                    logger.info(f"Moved {mp3_path.name} to {args.quarantine}")
 
     generate_aggregated_report(all_matches, output_dir, len(mp3_files))
 

@@ -66,12 +66,26 @@ def transcribe_audio(wav_path: Path, model: Model) -> Optional[str]:
 
 
 def process_mp3_file(
-    mp3_path: Path, model: Model, temp_dir: Path
+    mp3_path: Path, model: Model
 ) -> Optional[str]:
     """Processes a single MP3 file: converts to WAV and transcribes."""
-    wav_path = temp_dir / f"{mp3_path.stem}.wav"
-    if not convert_mp3_to_wav(mp3_path, wav_path):
-        return None
-    transcription = transcribe_audio(wav_path, model)
-    wav_path.unlink()  # Clean up the temporary WAV file
-    return transcription
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_wav_file:
+        wav_path = Path(temp_wav_file.name)
+        if not convert_mp3_to_wav(mp3_path, wav_path):
+            return None
+        
+        transcription = transcribe_audio(wav_path, model)
+        
+        if transcription:
+            save_transcription(transcription, mp3_path)
+            
+        return transcription
+
+def save_transcription(text: str, mp3_path: Path):
+    """Saves the transcription to a text file next to the MP3."""
+    output_path = mp3_path.with_suffix(".txt")
+    try:
+        output_path.write_text(text, encoding="utf-8")
+        logger.info(f"Transcription saved to {output_path}")
+    except IOError as e:
+        logger.error(f"Failed to save transcription to {output_path}: {e}")

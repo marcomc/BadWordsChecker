@@ -55,15 +55,14 @@ class TestTranscription(unittest.TestCase):
 
     @patch("badwordschecker.transcription.convert_mp3_to_wav", return_value=True)
     @patch("badwordschecker.transcription.transcribe_audio", return_value="transcribed text")
-    @patch("pathlib.Path.unlink")
-    def test_process_mp3_file_with_special_chars(self, mock_unlink, mock_transcribe, mock_convert):
+    @patch("badwordschecker.transcription.save_transcription")
+    def test_process_mp3_file(self, mock_save, mock_transcribe, mock_convert):
         model = MagicMock()
-        temp_dir = Path("/tmp")
-        result = process_mp3_file(Path("test file with 'special' chars.mp3"), model, temp_dir)
+        result = process_mp3_file(Path("test.mp3"), model)
         self.assertEqual(result, "transcribed text")
-        mock_convert.assert_called_once_with(Path("test file with 'special' chars.mp3"), temp_dir / "test file with 'special' chars.wav")
-        mock_transcribe.assert_called_once_with(temp_dir / "test file with 'special' chars.wav", model)
-        mock_unlink.assert_called_once()
+        mock_convert.assert_called_once()
+        mock_transcribe.assert_called_once()
+        mock_save.assert_called_once_with("transcribed text", Path("test.mp3"))
 
 
 if __name__ == "__main__":
